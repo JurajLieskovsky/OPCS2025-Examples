@@ -1,0 +1,1 @@
+lagrangian2eom @ git+https://github.com/lieskjur/lagrangian2eom
