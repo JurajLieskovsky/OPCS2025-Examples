@@ -12,6 +12,10 @@ from scipy.linalg import solve_discrete_are, solve
 from scipy.integrate import ode
 import matplotlib.pyplot as plt
 
+import meshcat
+from meshcat.animation import Animation
+import birotor_visualizer
+
 m = 1
 I = 1
 g = 9.81
@@ -94,50 +98,15 @@ ax1.legend()
 ax2.legend()
 plt.show(block=False)
 
-import meshcat
-from meshcat.geometry import Box, Cylinder, MeshBasicMaterial
-from meshcat.animation import Animation
-import meshcat.transformations as tf
-import numpy as np
-
+#  animation
 vis = meshcat.Visualizer()
 
-theta = np.pi / 4
+birotor_visualizer.initialize_birotor(vis, 0.6, 0.12, 0.25)
 
-# initialization
-width = 0.6
-height = 0.12
-radius = 0.25
-
-blue = MeshBasicMaterial(color=0x0000FF)
-green = MeshBasicMaterial(color=0x00C000)
-red = MeshBasicMaterial(color=0xFF0000)
-
-vis["quadrotor"]["body"].set_object(Box([width, width, height]), green)
-
-positions = [
-    [width / 2, -width / 2, 3 / 4 * height],
-    [width / 2, width / 2, 3 / 4 * height],
-    [-width / 2, width / 2, 3 / 4 * height],
-    [-width / 2, -width / 2, 3 / 4 * height],
-]
-
-for i, pos in enumerate(positions):
-    vis["quadrotor"]["rotor" + str(i)].set_object(Cylinder(height / 2, radius), blue)
-    vis["quadrotor"]["rotor" + str(i)].set_transform(
-        tf.translation_matrix(pos)
-        @ tf.quaternion_matrix([np.cos(np.pi / 4), np.sin(np.pi / 4), 0, 0])
-    )
-
-# animation
 anim = Animation(default_framerate=100)
-
 for i in range(500):
     with anim.at_frame(vis, i) as frame:
-        frame["quadrotor"].set_transform(
-            tf.translation_matrix([0, xs[0, i], xs[1, i]])
-            @ tf.quaternion_matrix([np.cos(xs[2, i] / 2), np.sin(xs[2, i] / 2), 0, 0])
-        )
+        birotor_visualizer.set_birotor_state(frame, xs[:, i])
 
 vis.set_animation(anim, play=False)
 
