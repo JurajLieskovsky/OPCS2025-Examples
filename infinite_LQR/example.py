@@ -65,13 +65,13 @@ x0 = np.array([1, 0, 0, 0, 0, 0])
 x_eq = np.array([0, 0, 0, 0, 0, 0])
 u_eq = m * g / 2 * np.ones(2)
 
+#  solution
 xs = np.zeros((6, N + 1))
 us = np.zeros((2, N))
 
-#  solution
-solver = ode(f).set_integrator("dopri5")
-
 xs[:, 0] = x0
+
+solver = ode(f).set_integrator("dopri5")
 
 for k in range(N):
     solver.set_initial_value(xs[:, k])  # reset initial conditions to last state
