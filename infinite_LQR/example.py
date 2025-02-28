@@ -82,11 +82,14 @@ for k in range(N):
 
 
 #  plotting
-plt.figure()
+fig, (ax1, ax2) = plt.subplots(2, 1)
 
-ts = np.arange(0, h * (N + 1), h)
+for i in range(3):
+    ax1.plot(xs[i, :].T, label=f"x{i}")
 
-for i in range(xs.shape[0]):
-    plt.plot(ts, xs[i, :].T)
+for i in range(2):
+    ax2.plot(us[i, :].T, label=f"u{i}")
 
+ax1.legend()
+ax2.legend()
 plt.show()
