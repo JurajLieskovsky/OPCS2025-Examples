@@ -3,10 +3,9 @@ from meshcat.geometry import Box, Cylinder, MeshBasicMaterial
 import meshcat.transformations as tf
 
 
-def initialize_birotor(vis, width, height, radius):
+def set_birotor(vis, width, height, radius):
     blue = MeshBasicMaterial(color=0x0000FF)
     green = MeshBasicMaterial(color=0x00C000)
-    red = MeshBasicMaterial(color=0xFF0000)
 
     vis["quadrotor"]["body"].set_object(Box([width, width, height]), green)
 

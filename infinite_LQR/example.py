@@ -101,10 +101,10 @@ plt.show(block=False)
 #  animation
 vis = meshcat.Visualizer()
 
-birotor_visualizer.initialize_birotor(vis, 0.6, 0.12, 0.25)
+birotor_visualizer.set_birotor(vis, 2*a, 0.04, 0.09)
 
-anim = Animation(default_framerate=100)
-for i in range(500):
+anim = Animation(default_framerate=1/h)
+for i in range(N+1):
     with anim.at_frame(vis, i) as frame:
         birotor_visualizer.set_birotor_state(frame, xs[:, i])
 
