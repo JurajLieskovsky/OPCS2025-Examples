@@ -50,7 +50,7 @@ B = h * np.array([[0, 0], [0, 0], [0, 0], [0, 0], [1 / m, 1 / m], [a / I, -a / I
 
 # infinite horizon LQR problem
 Q = np.diag(np.array([10, 10, 10, 1, 1, 1]))
-R = 1e0 * np.diag(np.ones(2))
+R = 1e-1 * np.diag(np.ones(2))
 
 # controller
 S = solve_discrete_are(A, B, Q, R)
@@ -60,7 +60,7 @@ K = solve(R + B.T @ S @ B, B.T @ S @ A)
 #  problem
 N = 500
 
-x0 = np.array([1, 0, 0, 0, 0, 0])
+x0 = np.array([2, 1, 0, 0, 0, 0])
 
 x_eq = np.array([0, 0, 0, 0, 0, 0])
 u_eq = m * g / 2 * np.ones(2)
@@ -92,4 +92,53 @@ for i in range(2):
 
 ax1.legend()
 ax2.legend()
-plt.show()
+plt.show(block=False)
+
+import meshcat
+from meshcat.geometry import Box, Cylinder, MeshBasicMaterial
+from meshcat.animation import Animation
+import meshcat.transformations as tf
+import numpy as np
+
+vis = meshcat.Visualizer()
+
+theta = np.pi / 4
+
+# initialization
+width = 0.6
+height = 0.12
+radius = 0.25
+
+blue = MeshBasicMaterial(color=0x0000FF)
+green = MeshBasicMaterial(color=0x00C000)
+red = MeshBasicMaterial(color=0xFF0000)
+
+vis["quadrotor"]["body"].set_object(Box([width, width, height]), green)
+
+positions = [
+    [width / 2, -width / 2, 3 / 4 * height],
+    [width / 2, width / 2, 3 / 4 * height],
+    [-width / 2, width / 2, 3 / 4 * height],
+    [-width / 2, -width / 2, 3 / 4 * height],
+]
+
+for i, pos in enumerate(positions):
+    vis["quadrotor"]["rotor" + str(i)].set_object(Cylinder(height / 2, radius), blue)
+    vis["quadrotor"]["rotor" + str(i)].set_transform(
+        tf.translation_matrix(pos)
+        @ tf.quaternion_matrix([np.cos(np.pi / 4), np.sin(np.pi / 4), 0, 0])
+    )
+
+# animation
+anim = Animation(default_framerate=100)
+
+for i in range(500):
+    with anim.at_frame(vis, i) as frame:
+        frame["quadrotor"].set_transform(
+            tf.translation_matrix([0, xs[0, i], xs[1, i]])
+            @ tf.quaternion_matrix([np.cos(xs[2, i] / 2), np.sin(xs[2, i] / 2), 0, 0])
+        )
+
+vis.set_animation(anim, play=False)
+
+input("Press Enter to continue...")
