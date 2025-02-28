@@ -10,6 +10,7 @@
 import numpy as np
 from scipy.linalg import solve_discrete_are, solve
 from scipy.integrate import ode
+import matplotlib.pyplot as plt
 
 m = 1
 I = 1
@@ -60,7 +61,9 @@ K = solve(R + B.T @ S @ B, B.T @ S @ A)
 N = 500
 
 x0 = np.array([1, 0, 0, 0, 0, 0])
-u0 = m * g / 2 * np.ones(2)
+
+x_eq = np.array([0, 0, 0, 0, 0, 0])
+u_eq = m * g / 2 * np.ones(2)
 
 xs = np.zeros((6, N + 1))
 us = np.zeros((2, N))
@@ -72,10 +75,18 @@ xs[:, 0] = x0
 
 for k in range(N):
     solver.set_initial_value(xs[:, k])  # reset initial conditions to last state
-    us[:, k] = u0 - K @ (xs[:, k] - x0)  # calculate control input
+    us[:, k] = u_eq - K @ (xs[:, k] - x_eq)  # calculate control input
     solver.set_f_params(us[:, k])  # set control input in solver
     solver.integrate(h)  # integrate a single step
     xs[:, k + 1] = solver.y  # save result to states
 
 
-print(xs[:, N])
+#  plotting
+plt.figure()
+
+ts = np.arange(0, h * (N + 1), h)
+
+for i in range(xs.shape[0]):
+    plt.plot(ts, xs[i, :].T)
+
+plt.show()
