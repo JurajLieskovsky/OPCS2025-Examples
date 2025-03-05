@@ -45,7 +45,16 @@ A = np.eye(6) + h * np.array(
     ]
 )
 
-B = h * np.array([[0, 0], [0, 0], [0, 0], [0, 0], [1 / m, 1 / m], [a / I, -a / I]])
+B = h * np.array(
+    [
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [0, 0],
+        [1 / m, 1 / m],
+        [a / I, -a / I],
+    ]
+)
 
 # infinite horizon LQR problem
 Q = np.diag(np.array([10, 10, 10, 1, 1, 1]))
@@ -60,7 +69,9 @@ K = solve(R + B.T @ S @ B, B.T @ S @ A)
 N = 500
 
 x0 = np.array([1, 0, 0, 0, 0, 0])
-u0 = m * g / 2 * np.ones(2)
+
+x_eq = np.zeros(6)
+u_eq = m * g / 2 * np.ones(2)
 
 xs = np.zeros((6, N + 1))
 us = np.zeros((2, N))
@@ -72,7 +83,7 @@ xs[:, 0] = x0
 
 for k in range(N):
     solver.set_initial_value(xs[:, k])  # reset initial conditions to last state
-    us[:, k] = u0 - K @ xs[:, k]  # calculate control input
+    us[:, k] = u_eq - K @ (xs[:, k] - x_eq) # calculate control input
     solver.set_f_params(us[:, k])  # set control input in solver
     solver.integrate(h)  # integrate a single step
     xs[:, k + 1] = solver.y  # save result to states
