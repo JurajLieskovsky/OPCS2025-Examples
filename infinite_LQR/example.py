@@ -63,7 +63,7 @@ B = h * np.array(
 
 # infinite horizon LQR problem
 Q = np.diag(np.array([10, 10, 10, 1, 1, 1]))
-R = 1e0 * np.diag(np.ones(2))
+R = 1e-1 * np.diag(np.ones(2))
 
 # controller
 S = solve_discrete_are(A, B, Q, R)
@@ -73,9 +73,9 @@ K = solve(R + B.T @ S @ B, B.T @ S @ A)
 #  problem
 N = 500
 
-x0 = np.array([1, 0, 0, 0, 0, 0])
+x0 = np.zeros(6)
 
-x_eq = np.zeros(6)
+x_eq = np.array([2, 1, 0, 0, 0, 0])
 u_eq = m * g / 2 * np.ones(2)
 
 #  solution
