@@ -10,6 +10,7 @@
 import numpy as np
 from scipy.linalg import solve_discrete_are, solve
 from scipy.integrate import ode
+import matplotlib.pyplot as plt
 
 m = 1
 I = 1
@@ -83,10 +84,20 @@ xs[:, 0] = x0
 
 for k in range(N):
     solver.set_initial_value(xs[:, k])  # reset initial conditions to last state
-    us[:, k] = u_eq - K @ (xs[:, k] - x_eq) # calculate control input
+    us[:, k] = u_eq - K @ (xs[:, k] - x_eq)  # calculate control input
     solver.set_f_params(us[:, k])  # set control input in solver
     solver.integrate(h)  # integrate a single step
     xs[:, k + 1] = solver.y  # save result to states
 
+# Plotting
+fig, (ax1, ax2) = plt.subplots(2, 1)
 
-print(xs[:, N])
+for i in range(3):
+    ax1.plot(xs[i, :], label=f"x{i}")
+
+for i in range(2):
+    ax2.plot(us[i, :], label=f"u{i}")
+
+ax1.legend()
+ax2.legend()
+plt.show()
