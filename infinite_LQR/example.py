@@ -61,16 +61,7 @@ B = h * np.array(
     ]
 )
 
-# infinite horizon LQR problem
-Q = np.diag(np.array([10, 10, 10, 1, 1, 1]))
-R = 1e-1 * np.diag(np.ones(2))
-
-# controller
-S = solve_discrete_are(A, B, Q, R)
-K = solve(R + B.T @ S @ B, B.T @ S @ A)
-
 # simulation
-#  problem
 N = 500
 
 x0 = np.zeros(6)
@@ -78,17 +69,66 @@ x0 = np.zeros(6)
 x_eq = np.array([2, 1, 0, 0, 0, 0])
 u_eq = m * g / 2 * np.ones(2)
 
-#  solution
 xs = np.zeros((6, N + 1))
 us = np.zeros((2, N))
 
-xs[:, 0] = x0
+"""  infinite horizon
+#   problem
+Q = np.diag(np.array([10, 10, 10, 1, 1, 1]))
+R = 1e-1 * np.diag(np.ones(2))
 
+#   controller
+S = solve_discrete_are(A, B, Q, R)
+K = solve(R + B.T @ S @ B, B.T @ S @ A)
+
+#   simulation
 solver = ode(f).set_integrator("dopri5")
+
+xs[:, 0] = x0
 
 for k in range(N):
     solver.set_initial_value(xs[:, k])  # reset initial conditions to last state
     us[:, k] = u_eq - K @ (xs[:, k] - x_eq)  # calculate control input
+    solver.set_f_params(us[:, k])  # set control input in solver
+    solver.integrate(h)  # integrate a single step
+    xs[:, k + 1] = solver.y  # save result to states
+"""
+
+#  finite horizon
+#   problem
+Q_N = 1e2 * np.diag(np.array([10, 10, 10, 1, 1, 1]))
+Q = np.zeros((6, 6))
+R = 1e-1 * np.diag(np.ones(2))
+
+#   controlller
+S = np.zeros((6, 6, N + 1))
+K = np.zeros((2, 6, N))
+
+S[:, :, N] = Q_N
+for k in reversed(range(N)):
+    S[:, :, k] = (
+        Q
+        + A.T @ S[:, :, k + 1] @ A
+        - A.T
+        @ S[:, :, k + 1]
+        @ B
+        @ np.linalg.inv(B.T @ S[:, :, k + 1] @ B + R)
+        @ B.T
+        @ S[:, :, k + 1]
+        @ A
+    )
+    S[:, :, k] = 0.5 * (S[:, :, k] + S[:, :, k].T)
+
+    K[:, :, k] = solve(R + B.T @ S[:, :, k + 1] @ B, B.T @ S[:, :, k + 1] @ A)
+
+#   simulation
+solver = ode(f).set_integrator("dopri5")
+
+xs[:, 0] = x0
+
+for k in range(N):
+    us[:, k] = u_eq - K[:, :, k] @ (xs[:, k] - x_eq)  # calculate control input
+    solver.set_initial_value(xs[:, k])  # reset initial conditions to last state
     solver.set_f_params(us[:, k])  # set control input in solver
     solver.integrate(h)  # integrate a single step
     xs[:, k + 1] = solver.y  # save result to states
