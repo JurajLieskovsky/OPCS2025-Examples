@@ -12,6 +12,10 @@ from scipy.linalg import solve_discrete_are, solve
 from scipy.integrate import ode
 import matplotlib.pyplot as plt
 
+import meshcat
+from meshcat.animation import Animation
+import birotor_visualizer
+
 m = 1
 I = 1
 g = 9.81
@@ -74,13 +78,13 @@ x0 = np.array([1, 0, 0, 0, 0, 0])
 x_eq = np.zeros(6)
 u_eq = m * g / 2 * np.ones(2)
 
+#  solution
 xs = np.zeros((6, N + 1))
 us = np.zeros((2, N))
 
-#  solution
-solver = ode(f).set_integrator("dopri5")
-
 xs[:, 0] = x0
+
+solver = ode(f).set_integrator("dopri5")
 
 for k in range(N):
     solver.set_initial_value(xs[:, k])  # reset initial conditions to last state
@@ -100,4 +104,18 @@ for i in range(2):
 
 ax1.legend()
 ax2.legend()
-plt.show()
+plt.show(block=False)
+
+#  animation
+vis = meshcat.Visualizer()
+
+birotor_visualizer.set_birotor(vis, 2 * a, 0.04, 0.09)
+
+anim = Animation(default_framerate=1 / h)
+for i in range(N + 1):
+    with anim.at_frame(vis, i) as frame:
+        birotor_visualizer.set_birotor_state(frame, xs[:, i])
+
+vis.set_animation(anim, play=False)
+
+input("Press Enter to continue...")
