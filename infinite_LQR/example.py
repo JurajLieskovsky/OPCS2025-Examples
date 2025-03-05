@@ -72,10 +72,10 @@ u_eq = m * g / 2 * np.ones(2)
 xs = np.zeros((6, N + 1))
 us = np.zeros((2, N))
 
-"""  infinite horizon
+#  infinite horizon
 #   problem
 Q = np.diag(np.array([10, 10, 10, 1, 1, 1]))
-R = 1e-1 * np.diag(np.ones(2))
+R = 1e1 * np.diag(np.ones(2))
 
 #   controller
 S = solve_discrete_are(A, B, Q, R)
@@ -92,11 +92,23 @@ for k in range(N):
     solver.set_f_params(us[:, k])  # set control input in solver
     solver.integrate(h)  # integrate a single step
     xs[:, k + 1] = solver.y  # save result to states
-"""
+
+# Plotting
+fig, (ax1, ax2) = plt.subplots(2, 1)
+
+for i in range(3):
+    ax1.plot(xs[i, :], label=f"x{i} - inf")
+
+for i in range(2):
+    ax2.plot(us[i, :], label=f"u{i} - inf")
+
+ax1.legend()
+ax2.legend()
+plt.show(block=False)
 
 #  finite horizon
 #   problem
-Q_N = 1e2 * np.diag(np.array([10, 10, 10, 1, 1, 1]))
+Q_N = 1e4 * np.diag(np.array([10, 10, 10, 1, 1, 1]))
 Q = np.zeros((6, 6))
 R = 1e-1 * np.diag(np.ones(2))
 
@@ -134,13 +146,11 @@ for k in range(N):
     xs[:, k + 1] = solver.y  # save result to states
 
 # Plotting
-fig, (ax1, ax2) = plt.subplots(2, 1)
-
 for i in range(3):
-    ax1.plot(xs[i, :], label=f"x{i}")
+    ax1.plot(xs[i, :], label=f"x{i} - fin")
 
 for i in range(2):
-    ax2.plot(us[i, :], label=f"u{i}")
+    ax2.plot(us[i, :], label=f"u{i} - fin")
 
 ax1.legend()
 ax2.legend()
