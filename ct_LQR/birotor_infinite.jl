@@ -1,6 +1,10 @@
+using Base: Forward
 using DifferentialEquations
 using Plots
 using MeshCatBenchmarkMechanisms
+using LinearAlgebra
+using ForwardDiff
+using MatrixEquations
 
 # System's dynamics
 mass = 1
@@ -17,18 +21,30 @@ f(x, u) = [
     a / moi * (u[1] - u[2])
 ]
 
-# Simulation
-tspan = (0.0, 10.0)
+# LQR
 x_eq = [2.0, 1, 0, 0, 0, 0]
 u_eq = mass * g / 2 * ones(2)
 
+Q = diagm([10, 10, 10, 1, 1, 1])
+R = I(2)
+
+A = ForwardDiff.jacobian(x -> f(x, u_eq), x_eq)
+B = ForwardDiff.jacobian(u -> f(x_eq, u), u_eq)
+
+S, _ = arec(A, B, R, Q)
+K = R \ B' * S
+
+# Simulation
+tspan = (0.0, 10.0)
+
 x0 = zeros(6)
 
-fun = ODEFunction((x, _, _) -> f(x, 2 * u_eq))
+fun = ODEFunction((x, _, _) -> f(x, u_eq - K * (x - x_eq)))
 prob = ODEProblem(fun, x0, tspan)
 sol = solve(prob)
 
-plot(sol)
+plt = plot(sol)
+display(plt)
 
 # Visualization
 to3D(x) = vcat(0, x[1:2], [cos(x[3] / 2), sin(x[3] / 2), 0, 0])
