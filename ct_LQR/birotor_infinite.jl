@@ -5,6 +5,7 @@ using MeshCatBenchmarkMechanisms
 using LinearAlgebra
 using ForwardDiff
 using MatrixEquations
+using ComponentArrays
 
 # System's dynamics
 mass = 1
@@ -34,16 +35,33 @@ B = ForwardDiff.jacobian(u -> f(x_eq, u), u_eq)
 S, _ = arec(A, B, R, Q)
 K = R \ B' * S
 
+# DAE definition
+y0 = ComponentArray(
+    x=ones(6),
+    u=zeros(2)
+)
+
+dae_M = diagm(y0)
+
+function dae_f(dy, y, _, _)
+    dy.x = f(y.x,y.u)
+    dy.u = u_eq - K * (y.x - x_eq) - y.u
+    return nothing
+end
+
 # Simulation
 tspan = (0.0, 10.0)
 
 x0 = zeros(6)
+y0.x = x0
 
-fun = ODEFunction((x, _, _) -> f(x, u_eq - K * (x - x_eq)))
-prob = ODEProblem(fun, x0, tspan)
-sol = solve(prob)
+fun = ODEFunction(dae_f, mass_matrix=dae_M)
+prob = ODEProblem(fun, y0, tspan)
+sol = solve(prob, Rodas5P())
 
-plt = plot(sol)
+plt = plot(layout=(2,1))
+plot!(plt, sol, idxs=1:6, subplot=1)
+plot!(plt, sol, idxs=7:8, subplot=2)
 display(plt)
 
 # Visualization
