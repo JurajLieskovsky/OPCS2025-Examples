@@ -26,26 +26,27 @@ f(x, u) = [
 x_eq = [2.0, 1, 0, 0, 0, 0]
 u_eq = mass * g / 2 * ones(2)
 
-Q = diagm([10, 10, 10, 1, 1, 1])
-R = I(2)
-
 A = ForwardDiff.jacobian(x -> f(x, u_eq), x_eq)
 B = ForwardDiff.jacobian(u -> f(x_eq, u), u_eq)
 
-S, _ = arec(A, B, R, Q)
-K = R \ B' * S
+## infinite horizon
+inf_Q = diagm([10, 10, 10, 1, 1, 1])
+inf_R = I(2)
+
+inf_S, _ = arec(A, B, inf_R, inf_Q)
+inf_K = inf_R \ B' * inf_S
 
 # DAE definition
-y0 = ComponentArray(
+fwd_y0 = ComponentArray(
     x=ones(6),
     u=zeros(2)
 )
 
-dae_M = diagm(y0)
+fwd_m = diagm(fwd_y0)
 
-function dae_f(dy, y, _, _)
+function fwd_f(dy, y, _, _)
     dy.x = f(y.x,y.u)
-    dy.u = u_eq - K * (y.x - x_eq) - y.u
+    dy.u = u_eq - inf_K * (y.x - x_eq) - y.u
     return nothing
 end
 
@@ -53,15 +54,15 @@ end
 tspan = (0.0, 10.0)
 
 x0 = zeros(6)
-y0.x = x0
+fwd_y0.x = x0
 
-fun = ODEFunction(dae_f, mass_matrix=dae_M)
-prob = ODEProblem(fun, y0, tspan)
-sol = solve(prob, Rodas5P())
+fwd_fun = ODEFunction(fwd_f, mass_matrix=fwd_m)
+fwd_prob = ODEProblem(fwd_fun, fwd_y0, tspan)
+fwd_sol= solve(fwd_prob, Rodas5P())
 
 plt = plot(layout=(2,1))
-plot!(plt, sol, idxs=1:6, subplot=1)
-plot!(plt, sol, idxs=7:8, subplot=2)
+plot!(plt, fwd_sol, idxs=1:6, subplot=1)
+plot!(plt, fwd_sol, idxs=7:8, subplot=2)
 display(plt)
 
 # Visualization
@@ -83,7 +84,7 @@ fps = 100
 anim = MeshCatBenchmarkMechanisms.Animation(vis, fps=fps)
 for (i, t) in enumerate(tspan[1]:1/fps:tspan[2])
     atframe(anim, i) do
-        MeshCatBenchmarkMechanisms.set_quadrotor_state!(vis, to3D(sol(t)))
+        MeshCatBenchmarkMechanisms.set_quadrotor_state!(vis, to3D(fwd_sol(t))
     end
 end
 setanimation!(vis, anim, play=false);
