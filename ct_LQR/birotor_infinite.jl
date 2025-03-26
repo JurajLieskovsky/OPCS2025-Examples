@@ -36,17 +36,40 @@ inf_R = I(2)
 inf_S, _ = arec(A, B, inf_R, inf_Q)
 inf_K = inf_R \ B' * inf_S
 
+## finite horizon
+fin_Φ = diagm([10, 10, 10, 1, 1, 1])
+fin_Q = zeros(6,6)
+fin_R = I(2)
+
+bwd_y0 = ComponentArray(
+    S=ones(6,6),
+    K=zeros(2,6)
+)
+
+bwd_M = diagm(bwd_y0)
+
+function bwd_f(dy,y, _, _)
+    dy.K = fin_R \ B' * y.S - y.K
+    dy.S = -(fin_Q - y.K' * fin_R * y.K + y.S * A + A' * y.S)
+    return nothing
+end
+
+bwd_y0.S = fin_Φ
+bwd_fun = ODEFunction(bwd_f, mass_matrix=bwd_M)
+bwd_prob = ODEProblem(bwd_fun, bwd_y0, (10.0, 0.0))
+bwd_sol = solve(bwd_prob, Rodas5P())
+
 # DAE definition
 fwd_y0 = ComponentArray(
     x=ones(6),
     u=zeros(2)
 )
 
-fwd_m = diagm(fwd_y0)
+fwd_M = diagm(fwd_y0)
 
-function fwd_f(dy, y, _, _)
+function fwd_f(dy, y, _, t)
     dy.x = f(y.x,y.u)
-    dy.u = u_eq - inf_K * (y.x - x_eq) - y.u
+    dy.u = u_eq - bwd_sol(t).K * (y.x - x_eq) - y.u
     return nothing
 end
 
@@ -56,7 +79,7 @@ tspan = (0.0, 10.0)
 x0 = zeros(6)
 fwd_y0.x = x0
 
-fwd_fun = ODEFunction(fwd_f, mass_matrix=fwd_m)
+fwd_fun = ODEFunction(fwd_f, mass_matrix=fwd_M)
 fwd_prob = ODEProblem(fwd_fun, fwd_y0, tspan)
 fwd_sol= solve(fwd_prob, Rodas5P())
 
