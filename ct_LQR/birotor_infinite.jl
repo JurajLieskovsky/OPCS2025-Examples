@@ -37,7 +37,7 @@ inf_S, _ = arec(A, B, inf_R, inf_Q)
 inf_K = inf_R \ B' * inf_S
 
 ## finite horizon
-fin_Φ = diagm([10, 10, 10, 1, 1, 1])
+fin_Φ = inf_S
 fin_Q = zeros(6,6)
 fin_R = I(2)
 
@@ -68,13 +68,14 @@ fwd_y0 = ComponentArray(
 fwd_M = diagm(fwd_y0)
 
 function fwd_f(dy, y, _, t)
+    K = t < 10.0 ? bwd_sol(t).K : inf_K
     dy.x = f(y.x,y.u)
-    dy.u = u_eq - bwd_sol(t).K * (y.x - x_eq) - y.u
+    dy.u = u_eq - K * (y.x - x_eq) - y.u
     return nothing
 end
 
 # Simulation
-tspan = (0.0, 10.0)
+tspan = (0.0, 20.0)
 
 x0 = zeros(6)
 fwd_y0.x = x0
