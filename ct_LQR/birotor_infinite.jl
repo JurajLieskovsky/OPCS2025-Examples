@@ -42,19 +42,23 @@ fin_Q = zeros(6,6)
 fin_R = I(2)
 
 bwd_y0 = ComponentArray(
-    S=ones(6,6),
+    P=ones(6,6),
     K=zeros(2,6)
 )
 
 bwd_M = diagm(bwd_y0)
 
 function bwd_f(dy,y, _, _)
-    dy.K = fin_R \ B' * y.S - y.K
-    dy.S = -(fin_Q - y.K' * fin_R * y.K + y.S * A + A' * y.S)
+    S = y.P * y.P'
+    dS = fin_Q - y.K' * fin_R * y.K + S * A + A' * S
+    dy.K = fin_R \ B' * S - y.K
+    dy.P = - 0.5 * dS * inv(y.P)'
     return nothing
 end
 
-bwd_y0.S = fin_Φ
+F = cholesky(fin_Φ)
+bwd_y0.P = F.L
+
 bwd_fun = ODEFunction(bwd_f, mass_matrix=bwd_M)
 bwd_prob = ODEProblem(bwd_fun, bwd_y0, (10.0, 0.0))
 bwd_sol = solve(bwd_prob, Rodas5P())
