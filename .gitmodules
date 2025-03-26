@@ -1,0 +1,3 @@
+[submodule "ct_LQR/MeshCatBenchmarkMechanisms"]
+	path = ct_LQR/MeshCatBenchmarkMechanisms
+	url = git@github.com:JurajLieskovsky/MeshCatBenchmarkMechanisms.jl.git
