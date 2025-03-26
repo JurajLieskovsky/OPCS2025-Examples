@@ -84,7 +84,7 @@ fps = 100
 anim = MeshCatBenchmarkMechanisms.Animation(vis, fps=fps)
 for (i, t) in enumerate(tspan[1]:1/fps:tspan[2])
     atframe(anim, i) do
-        MeshCatBenchmarkMechanisms.set_quadrotor_state!(vis, to3D(fwd_sol(t))
+        MeshCatBenchmarkMechanisms.set_quadrotor_state!(vis, to3D(fwd_sol(t)))
     end
 end
 setanimation!(vis, anim, play=false);
